@@ -13,6 +13,7 @@
             display: flex;
             flex-direction: column;
             align-items: center;
+            /* justify-content: center; KOMUTUNU KALDIRDIK */
             min-height: 100vh;
             overflow: hidden; 
             touch-action: none; 
@@ -30,7 +31,7 @@
             background-color: #fff;
             padding: 15px 30px;
             border-radius: 25px;
-            margin-top: 20px;
+            margin-top: 20px; /* HER ZAMAN TEPEDEN 20PX AŞAĞIDA DURACAK */
             box-shadow: 0 8px 0px #00796b;
             font-size: 1.5em;
             color: #00796b;
@@ -42,10 +43,12 @@
         .oyun-alani {
             width: 95%;
             max-width: 900px; 
-            margin-top: 30px;
             display: grid;
             grid-template-columns: repeat(4, 1fr); 
             gap: 15px;
+            /* SADECE OYUN ALANINI ORTADA TUTAN SİHİRLİ KOMUTLAR: */
+            margin-top: auto; 
+            margin-bottom: auto;
         }
 
         .slot {
@@ -82,7 +85,6 @@
             bottom: -100%; 
             width: 100%;
             height: 100%;
-            /* Animasyon süresi 0.15 saniye */
             transition: bottom 0.15s ease-out; 
             cursor: pointer;
             -webkit-tap-highlight-color: transparent; 
@@ -111,7 +113,7 @@
         }
 
         @media (max-width: 600px) {
-            .oyun-alani { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+            .oyun-alani { grid-template-columns: repeat(2, 1fr); gap: 10px; margin-top: auto; margin-bottom: auto; }
             .bilgi-cubugu { font-size: 1em; padding: 10px 15px; border-radius: 15px; }
             .bitis-ekrani h1 { font-size: 2.5em; }
         }
@@ -148,7 +150,6 @@
         let kalanSure = 40;
         let oyunBitti = false;
         
-        // Seviye Ayarları (Senin istediğin 20-10-10 düzeni)
         let ekrandaKalmaSuresi = 1200; 
         let firlatmaAraligi = 1000;    
         let level = 1;
@@ -156,11 +157,10 @@
         const mobilEkranMi = window.innerWidth <= 600;
         const toplamSlot = mobilEkranMi ? 6 : 8;
 
-        // KUSURSUZ MANTIK: Müsait slotların havuzu
         let musaitSlotlar = [];
 
         for(let i=0; i<toplamSlot; i++) {
-            musaitSlotlar.push(i); // Başlangıçta hepsi müsait
+            musaitSlotlar.push(i);
             oyunAlani.innerHTML += `
                 <div class="slot">
                     <div class="delik"></div>
@@ -174,12 +174,9 @@
         const dostCim = `<svg viewBox="0 0 100 120"><path d="M20 50 Q10 0 35 30 Q50 -20 65 30 Q90 0 80 50" fill="#4caf50" stroke="#1b5e20" stroke-width="2"/><circle cx="50" cy="70" r="35" fill="#8bc34a"/><circle cx="35" cy="65" r="10" fill="white"/><circle cx="35" cy="65" r="5" fill="black"/><circle cx="65" cy="65" r="10" fill="white"/><circle cx="65" cy="68" r="5" fill="black"/><path d="M40 85 Q50 95 60 85" stroke="white" stroke-width="3" fill="none" stroke-linecap="round"/><rect x="47" y="88" width="6" height="7" fill="white"/></svg>`;
         const dusmanCim = `<svg viewBox="0 0 100 120"><path d="M20 50 Q10 10 35 40 Q50 -10 65 40 Q90 10 80 50" fill="#2e7d32" stroke="#1b5e20" stroke-width="2"/><circle cx="50" cy="70" r="35" fill="#f44336"/><circle cx="35" cy="65" r="8" fill="black"/><circle cx="65" cy="65" r="8" fill="black"/><path d="M25 55 L45 62" stroke="black" stroke-width="4" stroke-linecap="round"/><path d="M75 55 L55 62" stroke="black" stroke-width="4" stroke-linecap="round"/><path d="M40 90 Q50 80 60 90" stroke="black" stroke-width="4" fill="none" stroke-linecap="round"/></svg>`;
 
-        // GÜVENLİ FIRLATMA FONKSİYONU
         function adamCikar() {
-            // Eğer oyun bittiyse veya havuzda boş saksı kalmadıysa hiçbir şey yapma
             if(oyunBitti || musaitSlotlar.length === 0) return;
 
-            // Havuzdan rastgele bir saksı seç ve havuzdan SİL
             let rastgeleIndex = Math.floor(Math.random() * musaitSlotlar.length);
             let secilenSaksiNo = musaitSlotlar.splice(rastgeleIndex, 1)[0]; 
             
@@ -189,57 +186,48 @@
             secilenKarakter.innerHTML = dusmanMi ? dusmanCim : dostCim;
             secilenKarakter.className = dusmanMi ? 'karakter dusman yukari' : 'karakter yukari';
 
-            // Ekranda kalma süresi dolunca doğal olarak aşağı inme emri
             secilenKarakter.inmeZamanlayici = setTimeout(() => {
                 asagiIndir(secilenKarakter, secilenSaksiNo);
             }, ekrandaKalmaSuresi);
         }
 
-        // GÜVENLİ İNDİRME VE HAVUZA İADE FONKSİYONU
         function asagiIndir(karakter, saksıNo) {
             karakter.classList.remove('yukari');
             
-            // Animasyon süresi (150ms) + 50ms güvenlik payı = 200ms bekle
-            // Karakter tamamen deliğe girdikten sonra saksıyı tekrar havuza ekle
             setTimeout(() => {
-                karakter.classList.remove('vuruldu'); // Temizlik
+                karakter.classList.remove('vuruldu'); 
                 if (!musaitSlotlar.includes(saksıNo)) {
                     musaitSlotlar.push(saksıNo);
                 }
             }, 200);
         }
 
-        // OYUN DÖNGÜSÜ
         function oyunDongusu() {
             if(oyunBitti) return;
 
-            adamCikar(); // 1. adamı kesin çıkar
+            adamCikar(); 
 
-            // Level'e göre 2. adamın asenkron çıkma ihtimali
             let ikinciCikmaIhtimali = 0;
-            if(level === 2) ikinciCikmaIhtimali = 0.4; // %40 ihtimal
-            if(level === 3) ikinciCikmaIhtimali = 0.6; // %60 ihtimal
+            if(level === 2) ikinciCikmaIhtimali = 0.4; 
+            if(level === 3) ikinciCikmaIhtimali = 0.6; 
 
             if(Math.random() < ikinciCikmaIhtimali) {
-                let asenkronGecikme = Math.random() * 300 + 200; // 0.2 ile 0.5 saniye arası gecikme
+                let asenkronGecikme = Math.random() * 300 + 200; 
                 setTimeout(() => {
                     if(!oyunBitti) adamCikar();
                 }, asenkronGecikme);
             }
 
-            // Sonraki döngüyü ayarla
             let sonrakiDongu = firlatmaAraligi * (Math.random() * 0.3 + 0.85);
             setTimeout(oyunDongusu, sonrakiDongu);
         }
 
-        // TIKLAMA (VURMA) FONKSİYONU
         function vur(el, event) {
             if(event) event.preventDefault(); 
             if(!el.classList.contains('yukari') || el.classList.contains('vuruldu')) return;
 
             el.classList.add('vuruldu');
             
-            // Doğal aşağı inme zamanlayıcısını iptal et, çünkü biz vurduk
             clearTimeout(el.inmeZamanlayici);
             
             if(el.classList.contains('dusman')) {
@@ -249,7 +237,6 @@
             }
             document.getElementById('skor').innerText = skor;
             
-            // Vurulduktan 100ms sonra (efekt görünsün diye) aşağı inme sürecini başlat
             let saksıNo = parseInt(el.dataset.index);
             setTimeout(() => {
                 asagiIndir(el, saksıNo);
@@ -263,12 +250,12 @@
         function zorluguGuncelle() {
             if (kalanSure <= 20 && kalanSure > 10 && level === 1) {
                 level = 2; 
-                ekrandaKalmaSuresi = 1100; // 1.1 sn
+                ekrandaKalmaSuresi = 1100; 
                 firlatmaAraligi = 900; 
                 ekraniRenklendir('#fb8c00');
             } else if (kalanSure <= 10 && level === 2) {
                 level = 3; 
-                ekrandaKalmaSuresi = 1000; // 1.0 sn
+                ekrandaKalmaSuresi = 1000; 
                 firlatmaAraligi = 800; 
                 ekraniRenklendir('#d84315');
             }
