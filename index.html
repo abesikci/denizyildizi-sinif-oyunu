@@ -23,7 +23,6 @@
             box-shadow: 0 10px 30px rgba(0,0,0,0.4);
         }
         
-        /* --- YENİ: Liderlik Butonu Tasarımı --- */
         .kupa-butonu {
             position: absolute;
             top: 20px;
@@ -43,7 +42,6 @@
         }
         .kupa-butonu:hover { transform: scale(1.1); }
 
-        /* --- YENİ: Liderlik Tablosu Ekranı --- */
         .modal {
             display: none;
             position: fixed;
@@ -64,7 +62,7 @@
         .modal-icerik h2 { color: #4caf50; font-size: 2.5em; margin-top: 0; }
         #skor-listesi { 
             list-style-type: none; padding: 0; font-size: 1.8em; text-align: left; 
-            max-height: 400px; overflow-y: auto; /* Çok çocuk olursa aşağı kaydırılabilir */
+            max-height: 400px; overflow-y: auto; 
         }
         #skor-listesi li { padding: 10px; border-bottom: 2px dashed #ccc; display: flex; justify-content: space-between; }
         .kapat-btn {
@@ -99,7 +97,7 @@
 
     <div id="liderlik" class="modal">
         <div class="modal-icerik">
-            <h2>🏆 En İyiler 🏆</h2>
+            <h2>🏆 Şampiyonlar Ligi 🏆</h2>
             <ul id="skor-listesi">
                 </ul>
             <button class="kapat-btn" onclick="tabloyuKapat()">Kapat</button>
@@ -109,45 +107,69 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js"></script>
     
     <script>
+        // Haritayı ekran boyutuna göre otomatik ölçeklendir
         imageMapResize(); 
 
+        // Tıklanan çocuğun ismini kaydedip oyuna yönlendir
         function oyunaBasla(cocukIsmi) {
             localStorage.setItem('aktifOyuncu', cocukIsmi);
             window.location.href = 'oyun.html';
         }
 
-        // --- YENİ: Liderlik Tablosu Fonksiyonları ---
-        function tabloyuGoster() {
-            // Kayıtlı skorları hafızadan çek
-            const skorlar = JSON.parse(localStorage.getItem('oyunSkorlari')) || {};
+        // --- JSONBin.io API BİLGİLERİ (Kendi bilgilerini buraya yaz!) ---
+        const BIN_ID = '69cbd949856a682189e75ab3';
+        const API_KEY = '$2a$10$KlIpjp6hm3VfGchDISQM0OeJXIFrqK5S9M3eCt4k/5/9CtkerPu3W';
+
+        // Online Liderlik Tablosunu Getiren Fonksiyon
+        async function tabloyuGoster() {
+            document.getElementById('liderlik').style.display = 'flex';
             const liste = document.getElementById('skor-listesi');
-            liste.innerHTML = ''; // Önce listeyi temizle
-
-            // Skorları büyükten küçüğe doğru sırala
-            const siraliSkorlar = Object.entries(skorlar).sort((a, b) => b[1] - a[1]);
-
-            if (siraliSkorlar.length === 0) {
-                liste.innerHTML = '<li style="justify-content:center;">Henüz kimse oynamadı!</li>';
-            } else {
-                siraliSkorlar.forEach((item, index) => {
-                    let madalya = '';
-                    // İlk 3'e giren çocuklara madalya emojisi veriyoruz :)
-                    if (index === 0) madalya = '🥇 ';
-                    else if (index === 1) madalya = '🥈 ';
-                    else if (index === 2) madalya = '🥉 ';
-                    else madalya = (index + 1) + '. ';
-
-                    // Listeye ekle
-                    liste.innerHTML += `<li><span>${madalya} ${item[0]}</span> <span><strong>${item[1]}</strong> Puan</span></li>`;
-                });
+            
+            if(BIN_ID === 'SENIN_BIN_ID_KODUNU_BURAYA_YAZ') {
+                liste.innerHTML = '<li style="justify-content:center; color:red; font-size: 0.6em;">Lütfen kodun içinden BIN_ID ve API_KEY kısımlarını kendi bilgilerinizle değiştirin.</li>';
+                return;
             }
 
-            // Ekranı görünür yap
-            document.getElementById('liderlik').style.display = 'flex';
+            liste.innerHTML = '<li style="justify-content:center;">Veriler çekiliyor... 🚀</li>';
+
+            try {
+                // Buluttan veriyi çek (X-Master-Key kullanıldı!)
+                let response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY }
+                });
+                
+                if (!response.ok) throw new Error("Ağ hatası veya yanlış Key");
+
+                let data = await response.json();
+                let skorlar = data.record;
+
+                // Skorları büyükten küçüğe doğru sırala
+                const siraliSkorlar = Object.entries(skorlar).sort((a, b) => b[1] - a[1]);
+
+                liste.innerHTML = ''; // Yükleniyor yazısını temizle
+
+                if (siraliSkorlar.length === 0 || Object.keys(skorlar).length === 0) {
+                    liste.innerHTML = '<li style="justify-content:center;">Henüz kimse oynamadı! İlk sen ol.</li>';
+                } else {
+                    siraliSkorlar.forEach((item, index) => {
+                        let madalya = '';
+                        // İlk 3'e madalya emojisi
+                        if (index === 0) madalya = '🥇 ';
+                        else if (index === 1) madalya = '🥈 ';
+                        else if (index === 2) madalya = '🥉 ';
+                        else madalya = (index + 1) + '. ';
+
+                        // Listeye ekle
+                        liste.innerHTML += `<li><span>${madalya} ${item[0]}</span> <span><strong>${item[1]}</strong> Puan</span></li>`;
+                    });
+                }
+            } catch(e) {
+                liste.innerHTML = '<li style="justify-content:center; color: red; font-size: 0.8em;">Bağlantı hatası. Tablo yüklenemedi.</li>';
+                console.error("Tablo çekme hatası:", e);
+            }
         }
 
         function tabloyuKapat() {
-            // Ekranı gizle
             document.getElementById('liderlik').style.display = 'none';
         }
     </script>

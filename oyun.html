@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Çim Adam: Kızıl Sinsi Düşman</title>
+    <title>Çim Adam: Kızıl Sinsi Düşman ve Online Skor</title>
     <style>
         body {
             margin: 0;
@@ -21,7 +21,6 @@
             -webkit-touch-callout: none;
         }
 
-        /* Bilgi çubuğu her zaman yukarıda sabittir */
         .bilgi-cubugu {
             width: 90%;
             max-width: 900px; 
@@ -46,7 +45,6 @@
             display: grid;
             grid-template-columns: repeat(4, 1fr); 
             gap: 15px;
-            /* Sadece oyun alanını ortada tutar */
             margin-top: auto; 
             margin-bottom: auto;
         }
@@ -146,9 +144,9 @@
 
     <script>
         // Oyuncu İsmini Güvenli Çekme
-        let oyuncu = "Süper Bora";
+        let oyuncu = "Gizemli Oyuncu";
         try {
-            oyuncu = localStorage.getItem('aktifOyuncu') || "Bahçıvan";
+            oyuncu = localStorage.getItem('aktifOyuncu') || "Gizemli Oyuncu";
         } catch(e) {}
         document.getElementById('oyuncu-ismi').innerText = oyuncu;
 
@@ -159,9 +157,8 @@
         let kalanSure = 40;
         let oyunBitti = false;
         
-        // Seviye Ayarları (20-10-10 düzeni)
-        let ekrandaKalmaSuresi = 1200; // Başlangıç 1.2 sn
-        let firlatmaAraligi = 1000;    // Başlangıç sıklığı
+        let ekrandaKalmaSuresi = 1200; 
+        let firlatmaAraligi = 1000;    
         let level = 1;
 
         const mobilEkranMi = window.innerWidth <= 600;
@@ -169,6 +166,49 @@
 
         let musaitSlotlar = [];
         let ardardaDostSayisi = 0;
+
+        // --- JSONBIN.IO AYARLARI ---
+        const BIN_ID = '69cbd949856a682189e75ab3';
+        const API_KEY = '$2a$10$KlIpjp6hm3VfGchDISQM0OeJXIFrqK5S9M3eCt4k/5/9CtkerPu3W';
+
+        // Online Kayıt Fonksiyonu
+        async function skoruOnlineKaydet(oyuncuAdi, yeniSkor) {
+            try {
+                console.log("Buluttaki skorlar kontrol ediliyor...");
+                let response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
+                    headers: { 'X-Master-Key': API_KEY } 
+                });
+                
+                if (!response.ok) throw new Error("Okuma yetkiniz yok veya ID yanlış!");
+
+                let data = await response.json();
+                let skorlar = data.record;
+
+                if (!skorlar[oyuncuAdi] || yeniSkor > skorlar[oyuncuAdi]) {
+                    skorlar[oyuncuAdi] = yeniSkor;
+                    console.log("Yeni rekor! Buluta gönderiliyor...", skorlar);
+
+                    let putResponse = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-Master-Key': API_KEY 
+                        },
+                        body: JSON.stringify(skorlar)
+                    });
+                    
+                    if (putResponse.ok) {
+                        console.log("BAŞARILI! Yeni skor buluta kaydedildi.");
+                    } else {
+                        throw new Error("Yazma yetkiniz yok!");
+                    }
+                } else {
+                    console.log("Mevcut rekor geçilemedi, bulut güncellenmedi.");
+                }
+            } catch (error) {
+                console.error("Online kayıt hatası:", error);
+            }
+        }
 
         // --- PREMIUM SAKSI SVG ---
         const saksıSvg = `
@@ -404,6 +444,11 @@
                 if (!skorlar[oyuncu] || skor > skorlar[oyuncu]) skorlar[oyuncu] = skor;
                 localStorage.setItem('oyunSkorlari', JSON.stringify(skorlar));
             } catch(e) {}
+
+            // --- YENİ EKLENEN KISIM: Online tetikleyici ---
+            if(BIN_ID !== 'SENIN_BIN_ID_KODUNU_BURAYA_YAZ') {
+                skoruOnlineKaydet(oyuncu, skor);
+            }
         }
 
         let hazirlikSayac = 3;
