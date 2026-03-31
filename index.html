@@ -5,79 +5,25 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Sınıf Oyunu</title>
     <style>
-        body {
-            margin: 0;
-            background-color: #e0f7fa;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            min-height: 100vh;
-            font-family: 'Comic Sans MS', sans-serif;
-            position: relative;
-        }
-        img.sinif-resmi {
-            width: 100%;
-            max-width: 1200px;
-            height: auto;
-            border-radius: 15px;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-        }
-        
-        .kupa-butonu {
-            position: absolute;
-            top: 20px;
-            right: 20px;
-            background-color: #ffeb3b;
-            border: 4px solid #ff9800;
-            border-radius: 30px;
-            padding: 15px 25px;
-            font-size: 1.5em;
-            font-weight: bold;
-            color: #d32f2f;
-            cursor: pointer;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
-            z-index: 10;
-            transition: transform 0.2s;
-            font-family: inherit;
-        }
+        body { margin: 0; background-color: #e0f7fa; display: flex; justify-content: center; align-items: center; min-height: 100vh; font-family: 'Comic Sans MS', sans-serif; position: relative; }
+        img.sinif-resmi { width: 100%; max-width: 1200px; height: auto; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.4); }
+        .kupa-butonu { position: absolute; top: 20px; right: 20px; background-color: #ffeb3b; border: 4px solid #ff9800; border-radius: 30px; padding: 15px 25px; font-size: 1.5em; font-weight: bold; color: #d32f2f; cursor: pointer; box-shadow: 0 5px 15px rgba(0,0,0,0.3); z-index: 10; transition: transform 0.2s; font-family: inherit; }
         .kupa-butonu:hover { transform: scale(1.1); }
-
-        .modal {
-            display: none;
-            position: fixed;
-            top: 0; left: 0; width: 100%; height: 100%;
-            background-color: rgba(0,0,0,0.8);
-            z-index: 100;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-icerik {
-            background-color: white;
-            padding: 30px 40px;
-            border-radius: 20px;
-            min-width: 350px;
-            border: 6px solid #ff9800;
-            text-align: center;
-        }
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.8); z-index: 100; justify-content: center; align-items: center; }
+        .modal-icerik { background-color: white; padding: 30px 40px; border-radius: 20px; min-width: 350px; border: 6px solid #ff9800; text-align: center; }
         .modal-icerik h2 { color: #4caf50; font-size: 2.5em; margin-top: 0; }
-        #skor-listesi { 
-            list-style-type: none; padding: 0; font-size: 1.8em; text-align: left; 
-            max-height: 400px; overflow-y: auto; 
-        }
+        #skor-listesi { list-style-type: none; padding: 0; font-size: 1.8em; text-align: left; max-height: 400px; overflow-y: auto; }
         #skor-listesi li { padding: 10px; border-bottom: 2px dashed #ccc; display: flex; justify-content: space-between; }
-        .kapat-btn {
-            margin-top: 25px; padding: 10px 30px; font-size: 1.5em; font-family: inherit;
-            background: #f44336; color: white; border: none; border-radius: 15px; cursor: pointer;
-            font-weight: bold;
-        }
+        .kapat-btn { margin-top: 25px; padding: 10px 30px; font-size: 1.5em; font-family: inherit; background: #f44336; color: white; border: none; border-radius: 15px; cursor: pointer; font-weight: bold; }
     </style>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
 </head>
 <body>
 
     <button class="kupa-butonu" onclick="tabloyuGoster()">🏆 Liderlik Tablosu</button>
-
     <img src="sinif-foto.png" alt="Sınıfımız" class="sinif-resmi" usemap="#sinifHaritasi">
-
     <map name="sinifHaritasi">
 		<area target="" alt="" title="" href="javascript:oyunaBasla('Efe')" coords="628,724,121" shape="circle">
 		<area target="" alt="" title="" href="javascript:oyunaBasla('Utku')" coords="385,687,125" shape="circle">
@@ -98,80 +44,62 @@
     <div id="liderlik" class="modal">
         <div class="modal-icerik">
             <h2>🏆 Şampiyonlar Ligi 🏆</h2>
-            <ul id="skor-listesi">
-                </ul>
+            <ul id="skor-listesi"></ul>
             <button class="kapat-btn" onclick="tabloyuKapat()">Kapat</button>
         </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js"></script>
-    
     <script>
-        // Haritayı ekran boyutuna göre otomatik ölçeklendir
         imageMapResize(); 
 
-        // Tıklanan çocuğun ismini kaydedip oyuna yönlendir
         function oyunaBasla(cocukIsmi) {
             localStorage.setItem('aktifOyuncu', cocukIsmi);
             window.location.href = 'oyun.html';
         }
 
-        // --- JSONBin.io API BİLGİLERİ (Kendi bilgilerini buraya yaz!) ---
-        const BIN_ID = '69cbd949856a682189e75ab3';
-        const API_KEY = '$2a$10$KlIpjp6hm3VfGchDISQM0OeJXIFrqK5S9M3eCt4k/5/9CtkerPu3W';
+        // --- FIREBASE AYARLARI (KENDİ BİLGİLERİNİ BURAYA YAPIŞTIR) ---
+        const firebaseConfig = {
+			apiKey: "AIzaSyBju2MZubFhQFTpxKmel-g553dcio511qU",
+			authDomain: "cimadamavi.firebaseapp.com",
+			projectId: "cimadamavi",
+			storageBucket: "cimadamavi.firebasestorage.app",
+			messagingSenderId: "227894994388",
+			appId: "1:227894994388:web:e989906dadb86fb3b52241"
+		  };
+        
+        // Firebase'i Başlat
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
 
-        // Online Liderlik Tablosunu Getiren Fonksiyon
         async function tabloyuGoster() {
             document.getElementById('liderlik').style.display = 'flex';
             const liste = document.getElementById('skor-listesi');
-            
-            if(BIN_ID === 'SENIN_BIN_ID_KODUNU_BURAYA_YAZ') {
-                liste.innerHTML = '<li style="justify-content:center; color:red; font-size: 0.6em;">Lütfen kodun içinden BIN_ID ve API_KEY kısımlarını kendi bilgilerinizle değiştirin.</li>';
-                return;
-            }
-
             liste.innerHTML = '<li style="justify-content:center;">Veriler çekiliyor... 🚀</li>';
 
             try {
-                // Buluttan veriyi çek (X-Master-Key kullanıldı!)
-                let response = await fetch(`https://api.jsonbin.io/v3/b/${BIN_ID}/latest`, {
-                    headers: { 'X-Master-Key': API_KEY }
-                });
+                // Firebase'den verileri büyükten küçüğe puan sırasına göre ve ilk 10 kişiyi al
+                const snapshot = await db.collection("skorlar").orderBy("puan", "desc").limit(10).get();
                 
-                if (!response.ok) throw new Error("Ağ hatası veya yanlış Key");
+                liste.innerHTML = ''; 
 
-                let data = await response.json();
-                let skorlar = data.record;
-
-                // Skorları büyükten küçüğe doğru sırala
-                const siraliSkorlar = Object.entries(skorlar).sort((a, b) => b[1] - a[1]);
-
-                liste.innerHTML = ''; // Yükleniyor yazısını temizle
-
-                if (siraliSkorlar.length === 0 || Object.keys(skorlar).length === 0) {
+                if (snapshot.empty) {
                     liste.innerHTML = '<li style="justify-content:center;">Henüz kimse oynamadı! İlk sen ol.</li>';
                 } else {
-                    siraliSkorlar.forEach((item, index) => {
-                        let madalya = '';
-                        // İlk 3'e madalya emojisi
-                        if (index === 0) madalya = '🥇 ';
-                        else if (index === 1) madalya = '🥈 ';
-                        else if (index === 2) madalya = '🥉 ';
-                        else madalya = (index + 1) + '. ';
-
-                        // Listeye ekle
-                        liste.innerHTML += `<li><span>${madalya} ${item[0]}</span> <span><strong>${item[1]}</strong> Puan</span></li>`;
+                    let index = 0;
+                    snapshot.forEach(doc => {
+                        let madalya = index === 0 ? '🥇 ' : index === 1 ? '🥈 ' : index === 2 ? '🥉 ' : (index + 1) + '. ';
+                        liste.innerHTML += `<li><span>${madalya} ${doc.id}</span> <span><strong>${doc.data().puan}</strong> Puan</span></li>`;
+                        index++;
                     });
                 }
             } catch(e) {
                 liste.innerHTML = '<li style="justify-content:center; color: red; font-size: 0.8em;">Bağlantı hatası. Tablo yüklenemedi.</li>';
-                console.error("Tablo çekme hatası:", e);
+                console.error("Firebase Hatası:", e);
             }
         }
 
-        function tabloyuKapat() {
-            document.getElementById('liderlik').style.display = 'none';
-        }
+        function tabloyuKapat() { document.getElementById('liderlik').style.display = 'none'; }
     </script>
 </body>
 </html>
